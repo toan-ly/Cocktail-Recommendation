@@ -99,7 +99,7 @@ class DataPreprocessor:
                         else:
                             recipe += f' - {ingredient}\n'
             except Exception as e:
-                recipe += f' - {row['ingredients']}\n'
+                recipe += f"- {row['ingredients']}\n"
 
         else:
             for i in range(1, 16):
@@ -140,10 +140,51 @@ class DataPreprocessor:
         return ', '.join(ingredients)
 
     def store_cocktails(self, data):
-        pass
+        try:
+            conn = self.db_setup.get_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("DELETE FROM cocktails")
+
+            print(f'Generating and storing embeddings for {len(data)} cocktails...')
+            embeddings = self.generate_embeddings(data['combined_text'].tolist())
+
+            for idx, (_, row) in enumerate(data.iterrows()):
+                emb = embeddings[idx]
+
+                name = row.get(self.name_col, '')
+                ingredients = self.get_ingredients_list(row)
+                recipe = self.create_recipe(row)
+                alcoholic = row.get(self.alcoholic_col, '')
+                category = row.get(self.category_col, '')
+                glass = row.get(self.glass_col, '')
+                iba = row.get('strIBA', '') 
+
+                cursor.execute("""
+                   INSERT INTO cocktails (name, ingredients, recipe, glass, category, iba, alcoholic, embedding)            
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (name, ingredients, recipe, glass, category, iba, alcoholic, emb.tolist()))
+
+                if (idx + 1) % 100 == 0:
+                    print(f'Inserted {idx + 1} records...')
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            print('✅ All cocktails stored successfully.')
+        except Exception as e:
+            print(f'❌ Error storing cocktails: {e}')
+            # Rollback in case of error
+            if 'conn' in locals():
+                conn.rollback()
+                conn.close()
 
     def run(self, data_path):
-        pass
+        data = self.load_data(data_path)
+        if data is None:
+            return
+        cleaned_data = self.clean_data(data)
+        self.store_cocktails(cleaned_data)
 
 
 if __name__ == "__main__":

@@ -78,7 +78,7 @@ class DBSetup:
                     """)
 
                 conn.commit()
-                print("pgvector extension and cocktails table set up successfully")
+                print("✅ pgvector extension and cocktails table set up successfully")
                     
         except Exception as e:
             print(f"Error setting up pgvector: {e}")

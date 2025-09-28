@@ -3,44 +3,60 @@
 import os
 import sys
 import subprocess
+import shutil
 
 def check_python_version():
     if sys.version_info < (3, 8):
-        print("Python 3.8 or higher is required.")
+        print("❌ Python 3.8 or higher is required.")
         return False
-    print(f'Python version {sys.version_info.major}.{sys.version_info.minor} detected.')
+    print(f'✅ Python version {sys.version_info.major}.{sys.version_info.minor} detected.')
     return True
+
+# def install_dependencies():
+#     print("Installing dependencies from requirements.txt...")
+#     try:
+#         subprocess.check_call([sys.executable, '-m', 'uv', 'pip', 'install', '-r', 'requirements.txt'])
+#         print("✅ All dependencies are installed.")
+#         return True
+#     except subprocess.CalledProcessError as e:
+#         print(f"❌ Error installing dependencies: {e}")
+#         return False
+req_path = os.path.join(os.path.dirname(__file__), "..", "requirements.txt")
 
 def install_dependencies():
     print("Installing dependencies from requirements.txt...")
-    try:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'])
-        print("All dependencies are installed.")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"Error installing dependencies: {e}")
-        return False
+    cmd = None
+    if os.getenv("UV_ACTIVE") or shutil.which("uv"):
+        print("Using 'uv' for installation.")
+        cmd = ["uv", "pip", "install", "-r", req_path]
+    else:
+        print("Using 'pip' for installation.")
+        subprocess.run([sys.executable, "-m", "ensurepip", "--upgrade"], check=False)
+        cmd = [sys.executable, "-m", "pip", "install", "-r", req_path]
+    subprocess.check_call(cmd)
+    print("✅ Dependencies installed")
+    return True
 
 def check_env_file():
     if not os.path.exists('.env'):
-        print(".env file is missing. Please create one based on .env.example.")
+        print("❌ .env file is missing. Please create one based on .env.example.")
         return False
-    print(".env file found.")
+    print("✅ .env file found.")
     return True
 
 def create_directories():
     dirs = ['data', 'logs']
     for dir in dirs:
         os.makedirs(dir, exist_ok=True)
-        print(f"Directory '{dir}' is ready.")
+        print(f"✅ Directory '{dir}' is ready.")
 
 def check_dataset():
-    data_path = 'data/cocktails.csv'
+    data_path = 'data/final_cocktails.csv'
     if not os.path.exists(data_path):
-        print(f"Dataset not found at {data_path}")
+        print(f"❌ Dataset not found at {data_path}")
         print("Please download from: https://www.kaggle.com/datasets/aadyasingh55/cocktails/data")
         return False
-    print("Dataset found.")
+    print("✅ Dataset found.")
     return True
 
 def main():
@@ -57,7 +73,7 @@ def main():
     
     dataset_exists = check_dataset()
 
-    print('Setup complete.\n')
+    print('✅ Setup complete.\n')
     print('Next steps:')
     print('1. Configure your database settings in the .env file.')
     if dataset_exists:
