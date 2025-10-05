@@ -22,3 +22,6 @@ docker-up:
 docker-down:
 	docker compose down -v
 
+
+demo:
+	uv run -m streamlit run src/app.py
