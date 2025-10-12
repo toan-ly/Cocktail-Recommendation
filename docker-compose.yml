@@ -16,5 +16,23 @@ services:
       retries: 3
     restart: unless-stopped
 
+  cocktail-app:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-your_password}
+      DB_NAME: ${DB_NAME:-cocktail_db}
+      MODEL_NAME: ${MODEL_NAME:-all-MiniLM-L6-v2}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    
 volumes:
   pgdata:

@@ -15,13 +15,17 @@ run-preprocess:
 run-recommender:
 	uv run src/recommender.py
 
-
 docker-up:
-	docker compose up -d
+	docker-compose up -d
 
 docker-down:
-	docker compose down -v
-
+	docker-compose down -v
 
 demo:
 	uv run -m streamlit run src/app.py
+
+run-local: docker-up run-setup run-preprocess run-recommender demo
+	
+run-docker: docker-up
+	docker-compose exec cocktail-app python src/database_setup.py
+	docker-compose exec cocktail-app python src/data_preprocessing.py
